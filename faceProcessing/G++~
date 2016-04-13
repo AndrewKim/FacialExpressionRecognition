@@ -1,0 +1,26 @@
+ 
+Preprocess:
+
+g++ -c -O3 -o obj/FacePreprocessing.o src/FacePreprocessing.cpp -I/usr/local/include  -Iinclude -I/usr/include/python2.7 -ldl -lutil -lpthread -lpython2.7
+
+g++ -o FacePreprocessing obj/FacePreprocessing.o obj/binary_model_file.o lib/libintraface.a -L/usr/local/lib  -lopencv_core -lopencv_objdetect -lopencv_imgproc -lopencv_highgui -I/usr/include/python2.7 -ldl -lutil -lpthread -lpython2.7
+
+
+
+
+
+g++ -c -O3 -o obj/TestDetector.o src/TestDetector.cpp -I/usr/local/include  -Iinclude -I/usr/include/python2.7 -ldl -lutil -lpthread -lpython2.7
+
+g++ -o TestDetector obj/TestDetector.o obj/binary_model_file.o lib/libintraface.a -L/usr/local/lib  -lopencv_core -lopencv_objdetect -lopencv_imgproc -lopencv_highgui -I/usr/include/python2.7 -ldl -lutil -lpthread -lpython2.7
+
+
+
+
+g++ -c -O3 -o obj/DemoProcessing.o src/DemoProcessing.cpp -I/usr/local/include  -Iinclude -I/usr/include/python2.7 -ldl -lutil -lpthread -lpython2.7
+
+g++ -o DemoProcessing obj/DemoProcessing.o obj/binary_model_file.o lib/libintraface.a -L/usr/local/lib  -lopencv_core -lopencv_objdetect -lopencv_imgproc -lopencv_highgui -I/usr/include/python2.7 -ldl -lutil -lpthread -lpython2.7
+
+
+g++ -c -O3 -o obj/DemoRec.o src/DemoRec.cpp -I/usr/local/include  -Iinclude -I/usr/include/python2.7 -ldl -lutil -lpthread -lpython2.7
+
+g++ -o DemoRec obj/DemoRec.o obj/binary_model_file.o lib/libintraface.a -L/usr/local/lib  -lopencv_core -lopencv_objdetect -lopencv_imgproc -lopencv_highgui -I/usr/include/python2.7 -ldl -lutil -lpthread -lpython2.7

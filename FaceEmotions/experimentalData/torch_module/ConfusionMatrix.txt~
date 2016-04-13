@@ -1,0 +1,34 @@
+==> doing epoch on training data:	
+==> online epoch # 2000 [batchSize = 20]	
+ [=================== 401/407 ================>.] ETA: 46ms | Step: 7ms         
+==> time to learn 1 sample = 1.6514915213245ms	
+ConfusionMatrix:
+[[     194       0       0       0       0       0       0       0]   100.000% 	[class: Neutral]
+ [       0      39       0       0       0       0       0       0]   100.000% 	[class: Angry]
+ [       0       0       7       0       0       0       0       0]   100.000% 	[class: Disgust]
+ [       0       0       0      34       0       0       0       0]   100.000% 	[class: Fear]
+ [       0       0       0       0      12       0       0       0]   100.000% 	[class: Happy]
+ [       0       0       0       0       0      43       0       0]   100.000% 	[class: Sadness]
+ [       0       0       0       0       0       0      16       0]   100.000% 	[class: Surprise]
+ [       0       0       0       0       0       0       0      55]]  100.000% 	[class: Contempt]
+ + average row correct: 100% 
+ + average rowUcol correct (VOC measure): 100% 
+ + global correct: 100%
+==> saving model to /home/pujandave/Documents/FacialEmotion/data/torch_module/results/model.net
+
+==> testing on test set:	
+ [=================== 401/407 ================>.] ETA: 39ms | Step: 6ms         
+==> time to test 1 sample = 0.45755981520294ms	
+ConfusionMatrix:
+[[     208       1       1       0       0       0       0       0]   99.048% 	[class: Neutral]
+ [       2      19       0       1       0       0       0       2]   79.167% 	[class: Angry]
+ [       5       0       4       0       1       0       0       0]   40.000% 	[class: Disgust]
+ [       2       0       0      39       0       0       0       0]   95.122% 	[class: Fear]
+ [       3       2       2       0       3       0       1       0]   27.273% 	[class: Happy]
+ [       0       0       0       0       0      43       0       0]   100.000% 	[class: Sadness]
+ [       0       3       0       0       1       0      10       0]   71.429% 	[class: Surprise]
+ [       2       0       0       0       1       0       0      44]]  93.617% 	[class: Contempt]
+ + average row correct: 75.706820189953% 
+ + average rowUcol correct (VOC measure): 69.713500328362% 
+ + global correct: 92.5%
+

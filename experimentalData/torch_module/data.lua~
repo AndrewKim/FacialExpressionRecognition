@@ -1,0 +1,228 @@
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+--- Author: Pujan Dave                                               ---
+---         B.S., Computer Engineering                               ---
+---         University of Illinois at Urbana-Champaign               ---
+---         Social Robotics Lab, NUS                                 ---
+---                                                                  ---
+--- Reference:                                                       ---
+---   https://github.com/torch/demos/tree/master/train-face-detector ---
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+---                        Requires torch7                           ---
+---                                                                  ---
+---  This code is to generate the dataset files for                  ---
+---  torch7 NN module using images as input data.                    ---
+---                                                                  ---
+---  To run this code:                                               ---
+---     th createDataSet.lua                                         ---
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+
+require 'torch'
+require 'image'
+require 'string'
+require 'nnx'
+
+torch.setdefaulttensortype('torch.FloatTensor')
+
+-- Classes: 'GLOBAL vars'
+classes={'Neutral','Angry','Disgust','Fear','Happy','Sadness','Surprise','Contempt'}
+
+-- Open a the training file
+file, err = io.open("/home/pujandave/Documents/FacialEmotion/emotion_detection/EXPRESSION/Emo_train.txt", "r")
+if err then print("The training file doesn't exists"); return; end
+
+-- Sets the default input file as the training file
+io.input(file)
+
+-- Specify the details for training
+numImages = 901
+numChannels = 1
+width = 32
+height = 32
+
+-- Declare train dataset
+trainData={
+	data = torch.Tensor(numImages, numChannels, width, height),
+	labels = torch.Tensor(numImages),
+	size = function() return numImages end
+}
+
+idx = 1
+
+-- Read each line and create data-set appropriately
+while true do
+	line = file:read()
+	if line == nil then break end
+	print(line)
+
+	-- Obtain the image path
+	n = string.find(line," ")
+	imgPath = string.sub(line,0,n-1)
+
+	-- Load the image, resize it and load it to train dataset
+	src = image.load(imgPath,1)
+	trainData.data[idx]=image.scale(src, width, height):clone()
+	
+	-- Obtain the image label
+	trainData.labels[idx]=tonumber(string.sub(line,n+1))+1
+
+	idx=idx+1
+end
+
+-- Close the opened file
+file:close()
+
+
+-- Open a the testing file
+file, err = io.open("/home/pujandave/Documents/FacialEmotion/emotion_detection/EXPRESSION/Emo_test.txt", "r")
+if err then print("The testing file doesn't exists"); return; end
+
+-- Sets the default input file as the testing file
+io.input(file)
+
+-- Specify the details for training
+numImages = 407
+
+-- Declare test dataset
+testData={
+	data = torch.Tensor(numImages, numChannels, width, height),
+	labels = torch.Tensor(numImages),
+	size = function() return numImages end
+}
+
+idx = 1
+
+-- Read each line and create data-set appropriately
+while true do
+	line = file:read()
+	if line == nil then break end
+	print(line)
+
+	-- Obtain the image path
+	n = string.find(line," ")
+	imgPath = string.sub(line,0,n-1)
+
+	-- Load the image, resize it and load it to test dataset
+	src = image.load(imgPath,1)
+	testData.data[idx]=image.scale(src, width, height):clone()
+	
+	-- Obtain the image label
+	testData.labels[idx]=tonumber(string.sub(line,n+1))+1
+
+	idx=idx+1
+end
+
+-- Close the opened file
+file:close()
+
+
+-- Generate the dataset files
+torch.save('train.t7', trainData)
+torch.save('test.t7', testData)
+
+-- Diaplay the generated dataset
+print(sys.COLORS.green .. 'Training Dataset:')
+print(trainData)
+print()
+print(sys.COLORS.green .. 'Testing Dataset:')
+print(testData)
+print()
+
+-----------------------------------------------
+print(sys.COLORS.red ..  '==> preprocessing data')
+
+-- For natural images, we use several intuitive tricks:
+--   + the luminance channel (Y) is locally normalized, using a contrastive
+--     normalization operator: for each neighborhood, defined by a Gaussian
+--     kernel, the mean is suppressed, and the standard deviation is normalized
+--     to one.
+--   + color channels are normalized globally, across the entire dataset;
+--     as a result, each color component has 0-mean and 1-norm across the dataset.
+
+-- Name channels for convenience
+local channels = {'y'}
+
+-- Normalize each channel, and store mean/std
+-- per channel. These values are important, as they are part of
+-- the trainable parameters. At test time, test data will be normalized
+-- using these values.
+print(sys.COLORS.red ..  '==> preprocessing data: normalize each feature (channel) globally')
+local mean = {}
+local std = {}
+for i,channel in ipairs(channels) do
+   -- normalize each channel globally:
+   mean[i] = trainData.data[{ {},i,{},{} }]:mean()
+   std[i] = trainData.data[{ {},i,{},{} }]:std()
+   trainData.data[{ {},i,{},{} }]:add(-mean[i])
+   trainData.data[{ {},i,{},{} }]:div(std[i])
+end
+
+-- Normalize test data, using the training means/stds
+for i,channel in ipairs(channels) do
+   -- normalize each channel globally:
+   testData.data[{ {},i,{},{} }]:add(-mean[i])
+   testData.data[{ {},i,{},{} }]:div(std[i])
+end
+
+-- Local contrast normalization is needed in the face dataset as the dataset is already in this form:
+print(sys.COLORS.red ..  '==> preprocessing data: normalize channels locally')
+
+-- Define the normalization neighborhood:
+local neighborhood = image.gaussian1D(5) -- 5 for face detector training
+
+-- Define our local normalization operator (It is an actual nn module, 
+-- which could be inserted into a trainable model):
+local normalization = nn.SpatialContrastiveNormalization(1, neighborhood, 1):float()
+
+-- Normalize all channels locally:
+for c in ipairs(channels) do
+   for i = 1,trainData:size() do
+      trainData.data[{ i,{c},{},{} }] = normalization:forward(trainData.data[{ i,{c},{},{} }])
+   end
+   for i = 1,testData:size() do
+      testData.data[{ i,{c},{},{} }] = normalization:forward(testData.data[{ i,{c},{},{} }])
+   end
+end
+
+----------------------------------------------------------------------
+print(sys.COLORS.red ..  '==> verify statistics')
+
+-- It's always good practice to verify that data is properly
+-- normalized.
+
+for i,channel in ipairs(channels) do
+   local trainMean = trainData.data[{ {},i }]:mean()
+   local trainStd = trainData.data[{ {},i }]:std()
+
+   local testMean = testData.data[{ {},i }]:mean()
+   local testStd = testData.data[{ {},i }]:std()
+
+   print('training data, '..channel..'-channel, mean: ' .. trainMean)
+   print('training data, '..channel..'-channel, standard deviation: ' .. trainStd)
+
+   print('test data, '..channel..'-channel, mean: ' .. testMean)
+   print('test data, '..channel..'-channel, standard deviation: ' .. testStd)
+end
+
+----------------------------------------------------------------------
+print(sys.COLORS.red ..  '==> visualizing data')
+
+-- Visualization is quite easy, using image.display(). Check out:
+-- help(image.display), for more info about options.
+local first256Samples_y = trainData.data[{ {1,256},1 }]
+image.display{image=first256Samples_y, nrow=16, legend='Some training examples: Y channel'}
+local first256Samples_y = testData.data[{ {1,256},1 }]
+image.display{image=first256Samples_y, nrow=16, legend='Some testing examples: Y channel'}
+
+
+-- Export
+return{
+	trainData = trainData,
+	testData = testData,
+	mean = mean,
+	std = std,
+	classes = classes
+}
+

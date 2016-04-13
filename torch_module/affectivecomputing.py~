@@ -1,0 +1,94 @@
+##########################################################################
+#------------------------------------------------------------------------#
+#--- Author: Pujan Dave                                               ---#
+#---         B.S., Computer Engineering                               ---#
+#---         University of Illinois at Urbana-Champaign               ---#
+#---         Social Robotics Lab, NUS                                 ---#
+#---                                                                  ---#
+#------------------------------------------------------------------------#
+##########################################################################
+#                      Emotion Detection                                 #
+#                                                                        #
+#  This code will use a camera to capture image frames to detect         #
+#  face. If a face is detected then it is cropped and then the image is  #
+#  passed into a Convolution Neural Network built using Torch            #
+##########################################################################
+
+import numpy as np
+import sys
+import cv2
+import cv
+import os
+
+import time
+
+sys.path.append("/usr/lib/python2.7/dist-packages/")
+import pygame
+
+cap = cv2.VideoCapture(0)
+textColor = (0, 0, 255)
+cnt=0
+str1=' '
+
+torchModule = 'qlua /home/pujandave/Documents/FacialEmotion/emotion_detection/torch_module/rock.lua'
+imgStore = '/home/pujandave/Documents/FacialEmotion/emotion_detection/torch_module/input/test.png'
+
+ret, frame = cap.read()
+
+while(True):
+
+    ret, frame = cap.read()
+    cv2.putText(frame, str1, (50, 50),cv2.FONT_HERSHEY_PLAIN, 3.0, textColor,4,cv2.CV_AA)
+    cv2.imshow('CameraFeed',frame)
+    cnt=cnt+1
+
+    if cnt%10==0:
+        start_time = time.time()
+        cv2.imwrite(imgStore,frame)
+        cnt=0
+	iimg = cv2.imread(imgStore)
+        gray = cv2.cvtColor(iimg, cv2.COLOR_BGR2GRAY)
+	cv2.imwrite(imgStore,gray)
+        s='./FaceCropTool'+' '+imgStore+' '+imgStore
+        os.system(s)
+
+        iimg = cv2.imread(imgStore)
+        gray = cv2.cvtColor(iimg, cv2.COLOR_BGR2GRAY)
+        equ = cv2.equalizeHist(gray)
+        cv2.imwrite(imgStore,equ)
+        fw=open('face.txt','r')
+        fwlen=fw.readline()
+        fw.close()
+        print fwlen
+        if fwlen.strip()!='':
+            os.system(torchModule)
+            fbin = open('/home/pujandave/Documents/FacialEmotion/emotion_detection/torch_module/output/class_label.bin','rb')
+            prediction = fbin.readline()
+	    fbin.close()
+            print prediction
+            if prediction=='0':
+                str1='Neutral'
+            elif prediction=='1':
+                str1='Angry'
+            elif prediction=='2':
+                str1='Disgust'
+            elif prediction=='3':
+                str1='Fear'
+            elif prediction=='4':
+                str1='Happy'
+            elif prediction=='5':
+                str1='Sadness'
+            elif prediction=='6':
+                str1='Surprise'
+            elif prediction=='7':
+                str1='Contempt'
+            else:
+                print "Can't predict"
+                str1=' '
+            print str1
+
+        print("--- %s seconds ---" % (time.time()-start_time))  
+
+    if cv2.waitKey(10) & 0xFF == ord('q'):
+        break
+

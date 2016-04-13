@@ -1,0 +1,29 @@
+g++ -c -O3 -o obj/TestDetector.o src/TestDetector.cpp -I/usr/local/include  -Iinclude -I/usr/include/python2.7 
+
+
+g++ -o TestDetector obj/TestDetector.o obj/binary_model_file.o lib/libintraface.a -L/usr/local/lib  -lopencv_core -lopencv_objdetect -lopencv_imgproc -lopencv_highgui -ldl -lutil -lpthread -lpython2.7
+
+
+
+
+g++ crop.cpp -I/usr/include/python2.7 -ldl -lutil -lpthread -lpython2.7
+
+
+g++ -c -O3 -o obj/DemoDetector.o src/DemoDetector.cpp -I/usr/local/include  -Iinclude
+
+g++ -o DemoDetector obj/DemoDetector.o obj/binary_model_file.o lib/libintraface.a -L/usr/local/lib  -lopencv_core -lopencv_objdetect -lopencv_imgproc -lopencv_highgui
+
+
+
+
+g++ crop.cpp -I/usr/include/python2.7 -ldl -lutil -lpthread -lpython2.7
+
+
+
+
+g++ -c -O3 -o obj/TestDetector.o src/TestDetector.cpp -I/usr/local/include  -Iinclude -I/usr/include/python2.7 -ldl -lutil -lpthread -lpython2.7
+
+g++ -o TestDetector obj/TestDetector.o obj/binary_model_file.o lib/libintraface.a -L/usr/local/lib  -lopencv_core -lopencv_objdetect -lopencv_imgproc -lopencv_highgui -I/usr/include/python2.7 -ldl -lutil -lpthread -lpython2.7
+
+
+
